@@ -1,0 +1,52 @@
+using System;
+using UnityEngine;
+using System.Collections.Generic;
+using System.IO;
+using Newtonsoft.Json;
+using HK;
+
+namespace Data
+{
+public enum #CLASSNAME#Type{
+#TYPEITEM#
+}
+
+[System.Serializable]
+public class #CLASSNAME#
+{
+	#CONSTCONTENT#
+}
+
+[System.Serializable]
+public class #CLASSNAME#s
+{
+	public List<#CLASSNAME#> #LISTNAME# = new List<#CLASSNAME#>();
+}
+
+public class #CLASSNAME#Excel
+{
+    private const string _fileName = "#FILENAME#";
+    private string _filePath;
+    private #CLASSNAME#s _datas;
+    public #CLASSNAME#s Datas => _datas;
+
+    public #CLASSNAME#Excel()
+    {
+        _filePath = $"Assets/Res/ExcelData/{_fileName}.json";
+        var text = ResourcesManager.Instance.Load<TextAsset>(_filePath);
+        _datas = JsonConvert.DeserializeObject<#CLASSNAME#s>(text.text);
+    }
+
+    public #CLASSNAME# GetData(int id)
+    {
+        foreach (var testData in _datas.#LISTNAME#)
+        {
+            if (id == testData.ID)
+            {
+                return testData;
+            }
+        }
+
+        throw new NullReferenceException();
+    }
+}}

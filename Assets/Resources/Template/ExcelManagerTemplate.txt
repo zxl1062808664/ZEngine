@@ -1,0 +1,12 @@
+namespace Data
+{
+public static class ExcelManager
+{
+    #PRI_EXCELDATA#
+    #PUB_EXCELDATA#
+    
+    static ExcelManager()
+    {
+        #NEWDATA#
+    }
+}}

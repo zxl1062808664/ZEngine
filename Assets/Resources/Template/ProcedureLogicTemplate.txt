@@ -1,0 +1,10 @@
+using Cysharp.Threading.Tasks;
+using UnityEngine;
+
+namespace ZC
+{
+    [Procedure(ProcedureType.#CLASSNAME#)]
+    class #CLASSNAME# : ProcedureBase
+    {
+    }
+}

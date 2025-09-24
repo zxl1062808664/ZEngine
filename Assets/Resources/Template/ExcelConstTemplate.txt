@@ -1,0 +1,8 @@
+using UnityEngine;
+using System.Collections.Generic;
+namespace Data
+{
+public static class #CLASSNAME#
+{
+	#CONSTCONTENT#
+}}

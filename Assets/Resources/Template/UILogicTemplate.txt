@@ -1,0 +1,35 @@
+using UnityEngine.UI;
+using TMPro;
+using UnityEngine;
+
+namespace HK
+{
+    public class #CLASSNAME# : #BASE#
+    {
+#VARIABLEDEFINITION#
+        public override void OnInit()
+        {
+            base.OnInit();
+            #region AutoGen_Init
+            
+#INITFIND#
+#INITADDLISTENER#
+            #endregion
+        }
+
+        #region AutoGen_Method
+       
+#METHOD#
+        #endregion
+
+        public override void OnDispose()
+        {
+            base.OnDispose();
+            #region AutoGen_Dispose
+            
+#DISPOSE#
+#DISPOSEISNULL#
+            #endregion
+        }
+    }
+}
