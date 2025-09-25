@@ -36,7 +36,7 @@ namespace Examples.Procedures
             // 3. 初始化完成，进入主菜单
             _progress = 1.0f;
             await Task.Delay(500); // 短暂延迟，让玩家看到完成状态
-            GameFramework.Instance.ProcedureModule.ChangeProcedure<MainMenuProcedure>(playerData);
+            GameFramework.Instance.ProcedureModule.ChangeProcedure<GamePlayProcedure>(playerData);
         }
 
         public override void OnUpdate(float deltaTime, float realDeltaTime)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Framework.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,8 +10,8 @@ namespace Framework.Core
     public class UIModule : IModule
     {
         private GameFramework _gameFramework;
-        private readonly Dictionary<string, UIView> _views = new Dictionary<string, UIView>();
-        private readonly Stack<UIView> _viewStack = new Stack<UIView>();
+        private readonly Dictionary<string, ViewBase<ViewModelBase>> _views = new Dictionary<string, ViewBase<ViewModelBase>>();
+        private readonly Stack<ViewBase<ViewModelBase>> _viewStack = new Stack<ViewBase<ViewModelBase>>();
         private Transform _uiRoot;
 
         public void SetGameFramework(GameFramework gameFramework)
@@ -21,31 +22,19 @@ namespace Framework.Core
         public void OnInitialize()
         {
             // 创建UI根节点
-            var uiRootObj = _gameFramework.transform.Find("UI/UIRoot").gameObject;
-            // GameObject.DontDestroyOnLoad(uiRootObj);
-            _uiRoot = uiRootObj.transform;
-
-            // 添加Canvas和CanvasScaler组件
-            // var canvas = uiRootObj.AddComponent<Canvas>();
-            // canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            //
-            // var scaler = uiRootObj.AddComponent<CanvasScaler>();
-            // scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            // scaler.referenceResolution = new Vector2(1920, 1080);
-            //
-            // uiRootObj.AddComponent<GraphicRaycaster>();
-
+            _uiRoot = _gameFramework.transform.Find("UI/UIRoot");
             LogModule.Log("UI module initialized");
         }
 
         // 加载并显示UI视图
-        public async Task<T> ShowViewAsync<T>(string assetPath, bool pushToStack = true, object data = null)
-            where T : UIView
+        public async Task<T> ShowViewAsync<T>(string assetPath,ViewModelBase vmBase, bool pushToStack = true, object data = null)
+            where T : ViewBase<ViewModelBase>
         {
             // 检查视图是否已存在
             if (_views.TryGetValue(assetPath, out var existingView))
             {
                 existingView.gameObject.SetActive(true);
+                existingView.Bind(vmBase);
                 existingView.OnShow(data);
 
                 if (pushToStack && _viewStack.Count == 0 || _viewStack.Peek() != existingView)
@@ -64,17 +53,17 @@ namespace Framework.Core
                 return null;
             }
 
-            // 获取UIView组件
+            // 获取ViewBase<ViewModelBase>组件
             var view = viewObj.GetComponent<T>();
             if (view == null)
             {
-                LogModule.Error($"UI view {assetPath} does not have a UIView component");
+                LogModule.Error($"UI view {assetPath} does not have a ViewBase<ViewModelBase> component");
                 GameObject.Destroy(viewObj);
                 return null;
             }
 
             // 初始化视图
-            view.Initialize();
+            view.OnInitialize();
             view.OnShow(data);
 
             // 存储视图引用
@@ -101,7 +90,7 @@ namespace Framework.Core
                 if (removeFromStack && _viewStack.Contains(view))
                 {
                     // 从栈中移除
-                    var tempStack = new Stack<UIView>();
+                    var tempStack = new Stack<ViewBase<ViewModelBase>>();
                     while (_viewStack.Count > 0)
                     {
                         var topView = _viewStack.Pop();
@@ -165,7 +154,7 @@ namespace Framework.Core
         }
 
         // 获取视图对应的资源路径
-        private string GetAssetPathForView(UIView view)
+        private string GetAssetPathForView(ViewBase<ViewModelBase> view)
         {
             foreach (var pair in _views)
             {
@@ -179,7 +168,7 @@ namespace Framework.Core
         }
 
         // 获取指定类型的视图
-        public T GetView<T>() where T : UIView
+        public T GetView<T>() where T : ViewBase<ViewModelBase>
         {
             foreach (var view in _views.Values)
             {

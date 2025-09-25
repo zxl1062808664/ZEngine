@@ -1,90 +1,108 @@
 ﻿using UnityEngine;
 using System;
+using System.ComponentModel;
 
-namespace Framework.UI.MVVM
+namespace Framework.UI
 {
-    public abstract class ViewBase : MonoBehaviour
+    using UnityEngine;
+
+    public abstract class ViewBase<TViewModel> : MonoBehaviour where TViewModel : ViewModelBase
     {
-        [SerializeField] protected string m_viewModelType;
-        
-        protected ViewModelBase m_viewModel;
-        private bool m_isBinding = false;
+        public TViewModel ViewModel { get; private set; }
+        protected bool _isInitialized = false;
 
-        protected virtual void Awake()
+        /// <summary>
+        /// 由UIManager调用，用于绑定ViewModel
+        /// </summary>
+        public void Bind(TViewModel viewModel)
         {
-            FindViewModel();
+            ViewModel = viewModel;
+
+            // 订阅ViewModel的PropertyChanged事件来触发绑定更新
+            ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+            // 执行初始化绑定
+            InitializeBindings();
+
+            ViewModel.OnCreate();
         }
 
-        protected virtual void OnEnable()
+        /// <summary>
+        /// 由UIManager调用，用于解绑
+        /// </summary>
+        public void Unbind()
         {
-            if (m_viewModel != null && !m_isBinding)
+            if (ViewModel != null)
             {
-                BindViewModel();
-                m_isBinding = true;
-            }
-        }
-
-        protected virtual void OnDisable()
-        {
-            if (m_viewModel != null && m_isBinding)
-            {
-                UnbindViewModel();
-                m_isBinding = false;
+                ViewModel.Cleanup();
+                ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+                ReleaseBindings();
+                ViewModel = null;
             }
         }
 
         protected virtual void OnDestroy()
         {
-            if (m_viewModel != null)
-            {
-                UnbindViewModel();
-                m_viewModel.Cleanup();
-                m_viewModel = null;
-            }
+            Cleanup();
         }
 
-        private void FindViewModel()
+        // 显示视图
+        public virtual void OnShow(object data)
         {
-            if (string.IsNullOrEmpty(m_viewModelType))
-                return;
-
-            Type type = Type.GetType(m_viewModelType);
-            if (type == null)
-            {
-                Framework.Core.LogModule.Error($"ViewModel type {m_viewModelType} not found");
-                return;
-            }
-
-            m_viewModel = Activator.CreateInstance(type) as ViewModelBase;
-            if (m_viewModel != null)
-            {
-                m_viewModel.Initialize();
-            }
-            else
-            {
-                Framework.Core.LogModule.Error($"Failed to create ViewModel instance for {m_viewModelType}");
-            }
         }
 
-        public void SetViewModel(ViewModelBase viewModel)
+        // 隐藏视图
+        public virtual void OnHide()
         {
-            if (m_viewModel != null && m_isBinding)
-            {
-                UnbindViewModel();
-                m_viewModel.Cleanup();
-            }
-
-            m_viewModel = viewModel;
-            m_viewModel?.Initialize();
-
-            if (m_viewModel != null && isActiveAndEnabled)
-            {
-                BindViewModel();
-                m_isBinding = true;
-            }
         }
 
-        protected abstract void BindViewModel();
-        protected abstract void UnbindViewModel();
+        // 初始化回调
+        protected internal virtual void OnInitialize()
+        {
+        }
+
+        // 更新回调
+        protected internal virtual void OnUpdate(float deltaTime)
+        {
+        }
+
+        // 固定更新回调
+        protected internal virtual void OnFixedUpdate(float fixedDeltaTime)
+        {
+        }
+
+        // 延迟更新回调
+        protected internal virtual void OnLateUpdate(float deltaTime)
+        {
+        }
+
+        // 清理资源
+        public virtual void Cleanup()
+        {
+            Unbind();
+
+            if (ViewModel != null)
+            {
+                // _viewModel.Cleanup();
+                ViewModel = null;
+            }
+
+            _isInitialized = false;
+        }
+
+        /// <summary>
+        /// 当ViewModel属性变化时被调用
+        /// </summary>
+        protected abstract void OnViewModelPropertyChanged(object sender, PropertyChangedEventArgs e);
+
+        /// <summary>
+        /// 在此方法中设置所有初始绑定
+        /// </summary>
+        protected abstract void InitializeBindings();
+
+        /// <summary>
+        /// 在此方法中释放所有绑定和事件监听
+        /// </summary>
+        protected abstract void ReleaseBindings();
     }
 }

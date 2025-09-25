@@ -43,7 +43,6 @@ namespace Examples
             // 注册流程
             var procedureModule = GameFramework.Instance.ProcedureModule;
             procedureModule.RegisterProcedure<InitProcedure>();
-            procedureModule.RegisterProcedure<MainMenuProcedure>();
             procedureModule.RegisterProcedure<GamePlayProcedure>();
 
             // 启动初始流程
