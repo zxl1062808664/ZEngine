@@ -1,6 +1,9 @@
 ﻿// using Examples.UI.ViewModels;
 // using Examples.UI.Views;
+
+using Cysharp.Threading.Tasks;
 using Framework.Core;
+using Game.UI;
 using UnityEngine;
 
 namespace Examples.Procedures
@@ -13,32 +16,36 @@ namespace Examples.Procedures
         public override void OnEnter(object userData)
         {
             LogModule.Log("进入游戏流程");
-            var model = new PlayerModel();
-            var viewModel = new PlayerInfoViewModel(model);
-            
-            // 显示游戏UI
-            GameFramework.Instance.UIModule.ShowViewAsync<PlayerInfoView>(AssetConst.Assets_Game_Res_Prefab_UI_GamePlayView_prefab,viewModel).ContinueWith(task =>
-            {
-                if (task.Result != null)
-                {
-                    _gamePlayView = task.Result;
-                    
-                    // 初始化游戏数据
-                    if (_gamePlayView.ViewModel is GamePlayViewModel vm)
-                    {
-                        vm.Score = 0;
-                        vm.TimeLeft = 60; // 60秒游戏时间
-                    }
-                }
-            });
+
+            UniTask.Create(Start);
 
             _gameTime = 0;
+        }
+
+        private async UniTask Start()
+        {
+            // 创建 ViewModel
+            var vm = new PlayerInfoViewModel
+            {
+                PlayerName = "勇者小明",
+                Level = 1,
+                HP = 100
+            };
+
+            // 显示 PlayerInfoView
+            var view = await GameFramework.Instance.UIModule.ShowViewAsync<PlayerInfoView, PlayerInfoViewModel>(
+                AssetConst.Assets_Game_Res_Prefab_UI_GamePlayView_prefab, vm);
+
+            if (view != null)
+            {
+                Debug.Log("PlayerInfoView 打开成功！");
+            }
         }
 
         public override void OnUpdate(float deltaTime, float realDeltaTime)
         {
             _gameTime += deltaTime;
-            
+
             // 更新游戏时间
             // if (_gamePlayView != null && _gamePlayView.ViewModel is GamePlayViewModel vm)
             // {
@@ -59,7 +66,7 @@ namespace Examples.Procedures
         private async void SaveGameScore(int score)
         {
             if (score <= 0) return;
-            
+
             // 加载并更新玩家数据
             var playerData = await GameFramework.Instance.DataPersistenceModule.LoadDataAsync<PlayerData>();
             if (score > playerData.highScore)
@@ -73,7 +80,7 @@ namespace Examples.Procedures
         public override void OnLeave(object userData)
         {
             LogModule.Log("离开游戏流程");
-            
+
             // 关闭游戏UI
             if (_gamePlayView != null)
             {

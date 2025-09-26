@@ -1,13 +1,9 @@
-﻿using System.Windows.Input;
+﻿using System;
+using System.Windows.Input;
+using UnityEngine.UI;
 
 namespace Framework.UI
 {
-    // 用法：在View的InitializeBindings中调用
-// binder.Bind(ViewModel.CloseCommand, closeButton);
-
-    using UnityEngine.UI;
-    using System;
-
     public class CommandBinder : IDisposable
     {
         private readonly ICommand _command;
@@ -25,13 +21,12 @@ namespace Framework.UI
                     _command.Execute(commandParameter);
                 }
             });
-        
+
             _command.CanExecuteChanged += OnCanExecuteChanged;
-        
-            // 立即更新一次按钮状态
+
             OnCanExecuteChanged(null, EventArgs.Empty);
         }
-    
+
         private void OnCanExecuteChanged(object sender, EventArgs e)
         {
             _button.interactable = _command.CanExecute(null);

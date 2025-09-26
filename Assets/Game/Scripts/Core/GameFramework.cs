@@ -19,6 +19,7 @@ namespace Framework.Core
         public DataPersistenceModule DataPersistenceModule => GetModule<DataPersistenceModule>();
         public ProcedureModule ProcedureModule => GetModule<ProcedureModule>();
         public LogModule LogModule => GetModule<LogModule>();
+        public bool isInitialized { get; private set; }
 
         private void Awake()
         {
@@ -33,6 +34,19 @@ namespace Framework.Core
 
             // 初始化核心模块
             InitializeModules();
+            EventModule.Instance.Subscribe(InitializeAssetsFinishEventArgs.EventID, InitializeAssetsFinishEvent);
+        }
+
+        private void InitializeAssetsFinishEvent(object sender, GameEventArgs e)
+        {
+            var args = e as InitializeAssetsFinishEventArgs;
+            if (!args.isFinished)
+            {
+                Debug.LogError("GameFramework instance not found!");
+                return;
+            }
+
+            isInitialized = args.isFinished;
         }
 
         private void InitializeModules()
@@ -76,6 +90,7 @@ namespace Framework.Core
             {
                 return module as T;
             }
+
             LogModule.Error($"Module {type.Name} not found");
             return null;
         }
@@ -113,6 +128,7 @@ namespace Framework.Core
             {
                 module.OnShutdown();
             }
+
             _modules.Clear();
 
             if (Instance == this)

@@ -31,7 +31,7 @@ namespace Framework.Core.Events
         protected GameEventArgs(object sender, int eventId)
         {
             Sender = sender ?? throw new ArgumentNullException(nameof(sender), "事件发送体（sender）不能为null");
-            if (eventId <= 0)
+            if (eventId == 0)
                 throw new ArgumentException("EventId必须大于0，确保全局唯一性", nameof(eventId));
             
             ID = eventId;
@@ -146,7 +146,7 @@ namespace Framework.Core.Events
         /// </summary>
         private void ValidateEventId(int eventId)
         {
-            if (eventId <= 0)
+            if (eventId == 0)
                 throw new ArgumentOutOfRangeException(nameof(eventId), "EventId必须大于0");
         }
 

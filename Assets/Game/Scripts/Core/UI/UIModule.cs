@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Framework.UI;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Framework.Core
 {
     public class UIModule : IModule
     {
         private GameFramework _gameFramework;
-        private readonly Dictionary<string, ViewBase<ViewModelBase>> _views = new Dictionary<string, ViewBase<ViewModelBase>>();
-        private readonly Stack<ViewBase<ViewModelBase>> _viewStack = new Stack<ViewBase<ViewModelBase>>();
+
+        // 用非泛型 ViewBase 存储，避免泛型协变问题
+        private readonly Dictionary<string, ViewBase> _views = new Dictionary<string, ViewBase>();
+        private readonly Stack<ViewBase> _viewStack = new Stack<ViewBase>();
+
         private Transform _uiRoot;
 
         public void SetGameFramework(GameFramework gameFramework)
@@ -21,31 +23,37 @@ namespace Framework.Core
 
         public void OnInitialize()
         {
-            // 创建UI根节点
             _uiRoot = _gameFramework.transform.Find("UI/UIRoot");
             LogModule.Log("UI module initialized");
         }
 
         // 加载并显示UI视图
-        public async Task<T> ShowViewAsync<T>(string assetPath,ViewModelBase vmBase, bool pushToStack = true, object data = null)
-            where T : ViewBase<ViewModelBase>
+        public async Task<TView> ShowViewAsync<TView, TViewModel>(string assetPath, TViewModel vmBase,
+            bool pushToStack = true, object data = null)
+            where TView : ViewBase<TViewModel>
+            where TViewModel : ViewModelBase
         {
-            // 检查视图是否已存在
-            if (_views.TryGetValue(assetPath, out var existingView))
+            if (_views.TryGetValue(assetPath, out var existingViewObj))
             {
+                var existingView = existingViewObj as TView;
+                if (existingView == null)
+                {
+                    LogModule.Error($"Cached view type mismatch for {assetPath}");
+                    return null;
+                }
+
                 existingView.gameObject.SetActive(true);
                 existingView.Bind(vmBase);
                 existingView.OnShow(data);
 
-                if (pushToStack && _viewStack.Count == 0 || _viewStack.Peek() != existingView)
+                if (pushToStack && (_viewStack.Count == 0 || _viewStack.Peek() != existingView))
                 {
-                    _viewStack.Push(existingView);
+                    _viewStack.Push(existingViewObj);
                 }
 
-                return existingView as T;
+                return existingView;
             }
 
-            // 加载UI预制体
             var viewObj = await _gameFramework.ResourceModule.InstantiatePrefabAsync(assetPath, _uiRoot);
             if (viewObj == null)
             {
@@ -53,23 +61,20 @@ namespace Framework.Core
                 return null;
             }
 
-            // 获取ViewBase<ViewModelBase>组件
-            var view = viewObj.GetComponent<T>();
+            var view = viewObj.GetComponent<TView>();
             if (view == null)
             {
-                LogModule.Error($"UI view {assetPath} does not have a ViewBase<ViewModelBase> component");
+                LogModule.Error($"UI view {assetPath} does not have a {typeof(TView)} component");
                 GameObject.Destroy(viewObj);
                 return null;
             }
 
-            // 初始化视图
             view.OnInitialize();
+            view.Bind(vmBase);
             view.OnShow(data);
 
-            // 存储视图引用
             _views.Add(assetPath, view);
 
-            // 推入栈
             if (pushToStack)
             {
                 _viewStack.Push(view);
@@ -79,36 +84,14 @@ namespace Framework.Core
             return view;
         }
 
-        // 隐藏UI视图
+        // --------------------------
+        // 通过 assetPath 操作的原版
+        // --------------------------
         public void HideView(string assetPath, bool removeFromStack = true)
         {
             if (_views.TryGetValue(assetPath, out var view))
             {
-                view.OnHide();
-                view.gameObject.SetActive(false);
-
-                if (removeFromStack && _viewStack.Contains(view))
-                {
-                    // 从栈中移除
-                    var tempStack = new Stack<ViewBase<ViewModelBase>>();
-                    while (_viewStack.Count > 0)
-                    {
-                        var topView = _viewStack.Pop();
-                        if (topView == view)
-                        {
-                            break;
-                        }
-
-                        tempStack.Push(topView);
-                    }
-
-                    // 恢复其他视图
-                    while (tempStack.Count > 0)
-                    {
-                        _viewStack.Push(tempStack.Pop());
-                    }
-                }
-
+                InternalHideView(view, removeFromStack);
                 LogModule.Log($"UI view hidden: {assetPath}");
             }
             else
@@ -117,22 +100,91 @@ namespace Framework.Core
             }
         }
 
-        // 关闭并销毁UI视图
         public void CloseView(string assetPath)
         {
             if (_views.TryGetValue(assetPath, out var view))
             {
-                HideView(assetPath);
-                view.Cleanup();
-                GameObject.Destroy(view.gameObject);
-                _views.Remove(assetPath);
-
-                LogModule.Log($"UI view closed: {assetPath}");
+                InternalCloseView(assetPath, view);
             }
             else
             {
                 LogModule.Warning($"UI view not found: {assetPath}");
             }
+        }
+
+        // --------------------------
+        // 新增：通过 ViewModel 操作
+        // --------------------------
+        public void HideView(ViewModelBase viewModel, bool removeFromStack = true)
+        {
+            var (key, view) = FindViewByViewModel(viewModel);
+            if (view == null)
+            {
+                LogModule.Warning($"HideView failed: View not found for {viewModel?.GetType().Name}");
+                return;
+            }
+
+            InternalHideView(view, removeFromStack);
+            LogModule.Log($"UI view hidden by ViewModel: {viewModel.GetType().Name}");
+        }
+
+        public void CloseView(ViewModelBase viewModel)
+        {
+            var (key, view) = FindViewByViewModel(viewModel);
+            if (view == null)
+            {
+                LogModule.Warning($"CloseView failed: View not found for {viewModel?.GetType().Name}");
+                return;
+            }
+
+            InternalCloseView(key, view);
+            LogModule.Log($"UI view closed by ViewModel: {viewModel.GetType().Name}");
+        }
+
+        // --------------------------
+        // 内部封装
+        // --------------------------
+        private void InternalHideView(ViewBase view, bool removeFromStack)
+        {
+            view.OnHide();
+            view.gameObject.SetActive(false);
+
+            if (removeFromStack && _viewStack.Contains(view))
+            {
+                var tempStack = new Stack<ViewBase>();
+                while (_viewStack.Count > 0)
+                {
+                    var topView = _viewStack.Pop();
+                    if (topView == view) break;
+                    tempStack.Push(topView);
+                }
+
+                while (tempStack.Count > 0)
+                {
+                    _viewStack.Push(tempStack.Pop());
+                }
+            }
+        }
+
+        private void InternalCloseView(string key, ViewBase view)
+        {
+            InternalHideView(view, true);
+            view.Cleanup();
+            GameObject.Destroy(view.gameObject);
+            _views.Remove(key);
+        }
+
+        private (string key, ViewBase view) FindViewByViewModel(ViewModelBase viewModel)
+        {
+            foreach (var pair in _views)
+            {
+                if (pair.Value.ViewModel == viewModel)
+                {
+                    return (pair.Key, pair.Value);
+                }
+            }
+
+            return (null, null);
         }
 
         // 关闭栈顶视图
@@ -153,34 +205,42 @@ namespace Framework.Core
             }
         }
 
-        // 获取视图对应的资源路径
-        private string GetAssetPathForView(ViewBase<ViewModelBase> view)
+        private string GetAssetPathForView(ViewBase view)
         {
             foreach (var pair in _views)
             {
-                if (pair.Value == view)
-                {
-                    return pair.Key;
-                }
+                if (pair.Value == view) return pair.Key;
             }
 
             return null;
         }
 
-        // 获取指定类型的视图
-        public T GetView<T>() where T : ViewBase<ViewModelBase>
+        // --------------------------
+        // 获取 View
+        // --------------------------
+        public T GetView<T>() where T : ViewBase
         {
             foreach (var view in _views.Values)
             {
-                if (view is T tView)
-                {
-                    return tView;
-                }
+                if (view is T tView) return tView;
             }
 
             return null;
         }
 
+        public ViewBase GetView(ViewModelBase viewModel)
+        {
+            foreach (var view in _views.Values)
+            {
+                if (view.ViewModel == viewModel) return view;
+            }
+
+            return null;
+        }
+
+        // --------------------------
+        // 生命周期
+        // --------------------------
         public void OnUpdate(float deltaTime)
         {
             foreach (var view in _views.Values)
@@ -216,7 +276,6 @@ namespace Framework.Core
 
         public void OnShutdown()
         {
-            // 关闭所有视图
             var assetPaths = new List<string>(_views.Keys);
             foreach (var path in assetPaths)
             {
@@ -225,12 +284,7 @@ namespace Framework.Core
 
             _views.Clear();
             _viewStack.Clear();
-
-            if (_uiRoot != null)
-            {
-                GameObject.Destroy(_uiRoot.gameObject);
-                _uiRoot = null;
-            }
+            _uiRoot = null;
 
             LogModule.Log("UI module shutdown");
         }

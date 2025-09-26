@@ -3,9 +3,6 @@ using System.Windows.Input;
 
 namespace Framework.UI
 {
-    using System;
-    using System.Windows.Input;
-
     public class RelayCommand : ICommand
     {
         private readonly Action<object> _execute;
@@ -19,7 +16,6 @@ namespace Framework.UI
             _canExecute = canExecute;
         }
 
-        // 为了方便，也可以提供一个无参版本
         public RelayCommand(Action execute, Func<bool> canExecute = null)
         {
             _execute = p => execute();
@@ -39,7 +35,6 @@ namespace Framework.UI
             _execute(parameter);
         }
 
-        // 手动触发CanExecuteChanged事件，用于更新命令的可执行状态（例如按钮的interactable）
         public void RaiseCanExecuteChanged()
         {
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);
@@ -59,7 +54,6 @@ namespace Framework.UI
             _canExecute = canExecute;
         }
 
-        // 为了方便，也可以提供一个无参版本
         public RelayCommand(Action execute, Func<bool> canExecute = null)
         {
             _execute = p => execute();
@@ -71,15 +65,38 @@ namespace Framework.UI
 
         public bool CanExecute(object parameter)
         {
-            return _canExecute == null || _canExecute((T)parameter);
+            if (_canExecute == null) return true;
+
+            if (parameter == null)
+            {
+                return !typeof(T).IsValueType;
+            }
+
+            if (parameter is T tParam)
+            {
+                return _canExecute(tParam);
+            }
+
+            return false;
         }
 
         public void Execute(object parameter)
         {
-            _execute((T)parameter);
+            if (parameter == null && typeof(T).IsValueType)
+            {
+                throw new ArgumentException($"Parameter cannot be null for value type {typeof(T).Name}");
+            }
+
+            if (parameter is T tParam)
+            {
+                _execute(tParam);
+            }
+            else
+            {
+                throw new ArgumentException($"Invalid parameter type. Expected {typeof(T).Name}");
+            }
         }
 
-        // 手动触发CanExecuteChanged事件，用于更新命令的可执行状态（例如按钮的interactable）
         public void RaiseCanExecuteChanged()
         {
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);

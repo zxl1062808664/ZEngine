@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Framework.Core;
@@ -20,26 +21,23 @@ namespace Examples
             }
         }
 
-        private void Start()
+        IEnumerator Start()
         {
-            EventModule.Instance.Subscribe(InitializeAssetsFinishEventArgs.EventID, InitializeAssetsFinishEvent);
             // 等待框架初始化
+            while (!GameFramework.Instance.isInitialized)
+            {
+                yield return null;
+            }
+
+            InitializeAssetsFinishEvent();
         }
 
         private void OnDestroy()
         {
-            EventModule.Instance.Unsubscribe(InitializeAssetsFinishEventArgs.EventID, InitializeAssetsFinishEvent);
         }
 
-        private void InitializeAssetsFinishEvent(object sender, GameEventArgs e)
+        private void InitializeAssetsFinishEvent()
         {
-            var args = e as InitializeAssetsFinishEventArgs;
-            if (!args.isFinished)
-            {
-                Debug.LogError("GameFramework instance not found!");
-                return;
-            }
-
             // 注册流程
             var procedureModule = GameFramework.Instance.ProcedureModule;
             procedureModule.RegisterProcedure<InitProcedure>();

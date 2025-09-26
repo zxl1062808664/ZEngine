@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4453058928005977675}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Handle Slide Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -47,7 +47,7 @@ GameObject:
   - component: {fileID: 2776397490054434760}
   - component: {fileID: 240342664165312173}
   - component: {fileID: 349201724958537590}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: txtLevel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -182,7 +182,7 @@ GameObject:
   - component: {fileID: 4374671907173566464}
   - component: {fileID: 5063426230639303913}
   - component: {fileID: 7090015840412781031}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: closeButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -302,7 +302,7 @@ GameObject:
   - component: {fileID: 2497166526796051375}
   - component: {fileID: 7520067003529643875}
   - component: {fileID: 6845535984896625457}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -377,7 +377,7 @@ GameObject:
   - component: {fileID: 6963807268027799792}
   - component: {fileID: 5294697009559330616}
   - component: {fileID: 6733348252650981565}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -511,7 +511,7 @@ GameObject:
   - component: {fileID: 4531532324764112929}
   - component: {fileID: 3109444071740672262}
   - component: {fileID: 481110695674965380}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -586,7 +586,7 @@ GameObject:
   - component: {fileID: 3020785844350824421}
   - component: {fileID: 3216963586449973217}
   - component: {fileID: 2993840274868081529}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: txtName
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -721,7 +721,7 @@ GameObject:
   - component: {fileID: 6351679370447277873}
   - component: {fileID: 2244963733658493202}
   - component: {fileID: 5575284517240228627}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: levelUpButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -841,7 +841,7 @@ GameObject:
   - component: {fileID: 8593596297988355143}
   - component: {fileID: 7651753949227560754}
   - component: {fileID: 6428397537051238809}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -973,7 +973,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4859347033119338309}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Fill Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1010,7 +1010,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6604727836361517050}
   - component: {fileID: 4568811712980014298}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Slider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1102,7 +1102,7 @@ GameObject:
   - component: {fileID: 9188051911892022733}
   - component: {fileID: 6969502057771882981}
   - component: {fileID: 4222622917360016787}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: GamePlayView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1183,9 +1183,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9092847bd154a3698beefab1d32bd78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerNameText: {fileID: 2993840274868081529}
+  nameText: {fileID: 2993840274868081529}
   levelText: {fileID: 349201724958537590}
-  expSlider: {fileID: 4568811712980014298}
+  hpSlider: {fileID: 4568811712980014298}
   closeButton: {fileID: 7090015840412781031}
   levelUpButton: {fileID: 5575284517240228627}
 --- !u!1 &8682830324263338175
@@ -1199,7 +1199,7 @@ GameObject:
   - component: {fileID: 8947233097434675992}
   - component: {fileID: 8911583694210848981}
   - component: {fileID: 6102483098032697214}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Handle
   m_TagString: Untagged
   m_Icon: {fileID: 0}

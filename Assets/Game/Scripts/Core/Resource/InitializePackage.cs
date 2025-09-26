@@ -14,6 +14,7 @@ namespace Framework.Core
         private EPlayMode PlayMode = EPlayMode.EditorSimulateMode;
 
         private string PackageName = "DefaultPackage";
+        GameObject loadWindow;
 
         public ResourcePackage GetPackage(string packageName)
         {
@@ -38,7 +39,7 @@ namespace Framework.Core
 
             // 加载更新页面
             var go = Resources.Load<GameObject>("PatchWindow");
-            var ins = GameObject.Instantiate(go);
+            loadWindow = GameObject.Instantiate(go);
 
 #if ENABLE_WEBGL || PLATFORM_WEBGL
             YooAssets.SetCacheSystemDisableCacheOnWebGL();
@@ -49,17 +50,6 @@ namespace Framework.Core
             // var operation = new PatchOperation("DefaultPackage", PlayMode);
             // YooAssets.StartOperation(operation);
             await InitPackage();
-
-            // 设置默认的资源包
-            var gamePackage = YooAssets.GetPackage("DefaultPackage");
-            YooAssets.SetDefaultPackage(gamePackage);
-
-            // 切换到主页面场景
-            // SceneEventDefine.ChangeToHomeScene.SendEventMessage();
-            // YooAssets.LoadSceneSync(SceneName);
-            ins.SetActive(false);
-            LogModule.Log("完成");
-            EventModule.Instance.FireNow(this, InitializeAssetsFinishEventArgs.Create(this, true));
         }
 
         private void UpdatePackageCallbackEvent(object sender, GameEventArgs e)
@@ -386,6 +376,14 @@ namespace Framework.Core
         {
             await UniTask.Yield();
             LogModule.Log("开始游戏！");
+
+            // 设置默认的资源包
+            var gamePackage = YooAssets.GetPackage("DefaultPackage");
+            YooAssets.SetDefaultPackage(gamePackage);
+
+            loadWindow.SetActive(false);
+            LogModule.Log("完成");
+            EventModule.Instance.FireNow(this, InitializeAssetsFinishEventArgs.Create(this, true));
         }
 
         #endregion
