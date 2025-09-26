@@ -17,7 +17,7 @@ namespace Examples
             // 确保框架实例存在
             if (GameFramework.Instance == null && gameFrameworkPrefab != null)
             {
-                // Instantiate(gameFrameworkPrefab);
+                Instantiate(gameFrameworkPrefab);
             }
         }
 
